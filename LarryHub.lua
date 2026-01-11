@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
---// FUNÇÃO CHARACTER (R6 / R15)
+--// CHARACTER
 local function getChar()
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hrp = char:WaitForChild("HumanoidRootPart")
@@ -14,14 +14,14 @@ end
 
 --// GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "LarryHub"
+gui.Name = "LarryHubDEV"
 gui.ResetOnSpawn = false
 gui.Parent = game.CoreGui
 
---// BOTÃO ☠️ TOGGLE (40x40, MÓVEL)
+--// BOTÃO ☠️
 local toggle = Instance.new("TextButton")
 toggle.Size = UDim2.fromOffset(40,40)
-toggle.Position = UDim2.fromScale(0.9,0.05)
+toggle.Position = UDim2.fromScale(0.92,0.08)
 toggle.Text = "☠️"
 toggle.TextSize = 22
 toggle.Font = Enum.Font.GothamBlack
@@ -34,169 +34,211 @@ Instance.new("UICorner", toggle).CornerRadius = UDim.new(0,8)
 
 --// FRAME PRINCIPAL
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(240,260)
-frame.Position = UDim2.fromScale(0.35,0.35)
+frame.Size = UDim2.fromOffset(260,330)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.Position = UDim2.fromScale(0.62,0.5)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
 
 --// TÍTULO
 local title = Instance.new("TextLabel")
-title.Size = UDim2.fromOffset(240,30)
+title.Size = UDim2.fromOffset(260,32)
 title.Text = "☠️ LARRY HUB DEV ☠️"
 title.Font = Enum.Font.GothamBlack
-title.TextSize = 16
+title.TextSize = 15
 title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
 title.Parent = frame
 
+--// SCROLLING FRAME (INVISÍVEL)
+local scroll = Instance.new("ScrollingFrame")
+scroll.Position = UDim2.fromOffset(0,32)
+scroll.Size = UDim2.fromOffset(260,298)
+scroll.CanvasSize = UDim2.new(0,0,0,420)
+scroll.ScrollBarImageTransparency = 1
+scroll.BackgroundTransparency = 1
+scroll.Parent = frame
+
 --// FUNÇÃO BOTÃO
-local function mkBtn(txt,y,color)
+local function mkBtn(text,y,color)
 	local b = Instance.new("TextButton")
-	b.Size = UDim2.fromOffset(220,30)
-	b.Position = UDim2.fromOffset(10,y)
-	b.Text = txt
+	b.Size = UDim2.fromOffset(230,34)
+	b.Position = UDim2.fromOffset(15,y)
+	b.Text = text
 	b.Font = Enum.Font.GothamBold
-	b.TextSize = 13
+	b.TextSize = 14
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = color
-	b.Parent = frame
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	b.Parent = scroll
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
 	return b
 end
 
-local setBtn    = mkBtn("SETAR POSIÇÃO",40,Color3.fromRGB(0,170,255))
-local goBtn     = mkBtn("IR ATÉ POSIÇÃO",75,Color3.fromRGB(0,200,120))
-local noclipBtn = mkBtn("NOCLIP: OFF",110,Color3.fromRGB(200,80,80))
-local arBtn     = mkBtn("ANTI RAGDOLL: OFF",145,Color3.fromRGB(200,80,80))
-local speedBtn  = mkBtn("",180,Color3.fromRGB(120,120,255))
+--// BOTÕES
+local setBtn    = mkBtn("SETAR POSIÇÃO",10,Color3.fromRGB(0,170,255))
+local goBtn     = mkBtn("IR ATÉ POSIÇÃO",55,Color3.fromRGB(0,200,120))
+local noclipBtn = mkBtn("NOCLIP: OFF",100,Color3.fromRGB(200,80,80))
+local ragBtn    = mkBtn("ANTI RAGDOLL: OFF",145,Color3.fromRGB(200,80,80))
+local speedBtn  = mkBtn("",190,Color3.fromRGB(120,120,255))
+local toolsBtn  = mkBtn("TOOLS: OFF",235,Color3.fromRGB(180,120,60))
 
---// VARIÁVEIS
-local savedAttachment
-local noclip = false
-local antiRagdoll = false
-local noclipConn
+--// FRAME TOOLS
+local toolsFrame = Instance.new("Frame")
+toolsFrame.Size = UDim2.fromOffset(260,330)
+toolsFrame.AnchorPoint = Vector2.new(0.5,0.5)
+toolsFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+toolsFrame.BorderSizePixel = 0
+toolsFrame.Visible = false
+toolsFrame.Parent = gui
+Instance.new("UICorner", toolsFrame).CornerRadius = UDim.new(0,12)
 
---// TOGGLE MENU
+--// SEARCH
+local search = Instance.new("TextBox")
+search.Size = UDim2.fromOffset(230,30)
+search.Position = UDim2.fromOffset(15,12)
+search.PlaceholderText = "Buscar tool..."
+search.Font = Enum.Font.Gotham
+search.TextSize = 13
+search.TextColor3 = Color3.new(1,1,1)
+search.BackgroundColor3 = Color3.fromRGB(45,45,45)
+search.Parent = toolsFrame
+Instance.new("UICorner", search).CornerRadius = UDim.new(0,8)
+
+--// SCROLL TOOLS
+local toolsScroll = Instance.new("ScrollingFrame")
+toolsScroll.Position = UDim2.fromOffset(0,50)
+toolsScroll.Size = UDim2.fromOffset(260,270)
+toolsScroll.CanvasSize = UDim2.new(0,0,0,0)
+toolsScroll.ScrollBarImageTransparency = 1
+toolsScroll.BackgroundTransparency = 1
+toolsScroll.Parent = toolsFrame
+
+--// ALINHAMENTO PERFEITO
+local function alignToolsFrame()
+	toolsFrame.Position = UDim2.new(
+		frame.Position.X.Scale,
+		frame.Position.X.Offset - frame.AbsoluteSize.X - 14,
+		frame.Position.Y.Scale,
+		frame.Position.Y.Offset
+	)
+end
+
+frame:GetPropertyChangedSignal("Position"):Connect(alignToolsFrame)
+frame:GetPropertyChangedSignal("Size"):Connect(alignToolsFrame)
+alignToolsFrame()
+
+--// TOGGLE HUB
 toggle.MouseButton1Click:Connect(function()
 	frame.Visible = not frame.Visible
+	if not frame.Visible then
+		toolsFrame.Visible = false
+		toolsBtn.Text = "TOOLS: OFF"
+	end
 end)
 
---------------------------------------------------
---// SPEED SYSTEM
---------------------------------------------------
-local speedLevel = 1
-local baseSpeed = 16
-
-local function applySpeed()
-	local char = player.Character
-	if not char then return end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum.WalkSpeed = baseSpeed * speedLevel
-	end
+--// SPEED
+local speed = 1
+local base = 16
+local function updateSpeed()
+	local next = speed + 1
+	if next > 5 then next = 1 end
+	speedBtn.Text = "SPEED "..speed.."x (PRÓXIMO "..next.."x)"
+	local _,_,hum = getChar()
+	hum.WalkSpeed = base * speed
 end
-
-local function updateSpeedText()
-	local nextSpeed = speedLevel + 1
-	if nextSpeed > 5 then nextSpeed = 1 end
-	speedBtn.Text = "SPEED " .. speedLevel .. "x (PRÓXIMO " .. nextSpeed .. "x)"
-end
-
-updateSpeedText()
+updateSpeed()
 
 speedBtn.MouseButton1Click:Connect(function()
-	speedLevel += 1
-	if speedLevel > 5 then speedLevel = 1 end
-	applySpeed()
-	updateSpeedText()
+	speed += 1
+	if speed > 5 then speed = 1 end
+	updateSpeed()
 end)
 
-player.CharacterAdded:Connect(function()
-	task.wait(0.3)
-	applySpeed()
-end)
-
---------------------------------------------------
---// SETAR POSIÇÃO
---------------------------------------------------
+--// SET / GO POS
+local savedCF
 setBtn.MouseButton1Click:Connect(function()
 	local _,hrp = getChar()
-	if savedAttachment then savedAttachment:Destroy() end
-	savedAttachment = Instance.new("Attachment")
-	savedAttachment.WorldCFrame = hrp.CFrame
-	savedAttachment.Parent = workspace.Terrain
+	savedCF = hrp.CFrame
 end)
 
---------------------------------------------------
---// IR ATÉ POSIÇÃO (SEM ANTI TP)
---------------------------------------------------
 goBtn.MouseButton1Click:Connect(function()
-	if not savedAttachment then return end
+	if not savedCF then return end
 	local _,hrp = getChar()
-
-	local start = hrp.CFrame
-	local target = savedAttachment.WorldCFrame
-	local alpha = 0
-	local speed = 0.12
-
-	local conn
-	conn = RunService.RenderStepped:Connect(function(dt)
-		alpha += dt / speed
-		if alpha >= 1 then
-			hrp.CFrame = target
-			conn:Disconnect()
-			return
-		end
-		hrp.CFrame = start:Lerp(target, alpha)
-	end)
+	hrp.CFrame = savedCF
 end)
 
---------------------------------------------------
 --// NOCLIP
---------------------------------------------------
+local noclip = false
+RunService.Stepped:Connect(function()
+	if not noclip then return end
+	for _,v in pairs(player.Character:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = false
+		end
+	end
+end)
+
 noclipBtn.MouseButton1Click:Connect(function()
 	noclip = not noclip
 	noclipBtn.Text = noclip and "NOCLIP: ON" or "NOCLIP: OFF"
-	noclipBtn.BackgroundColor3 = noclip and Color3.fromRGB(80,200,120) or Color3.fromRGB(200,80,80)
-
-	if noclipConn then noclipConn:Disconnect() end
-	if noclip then
-		noclipConn = RunService.Stepped:Connect(function()
-			local char = player.Character
-			if not char then return end
-			for _,v in pairs(char:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = false
-				end
-			end
-		end)
-	end
 end)
 
---------------------------------------------------
---// ANTI RAGDOLL (SEM LENTIDÃO)
---------------------------------------------------
+--// ANTI RAGDOLL
+local antiRag = false
 RunService.Heartbeat:Connect(function()
-	if not antiRagdoll then return end
-	local char,_,hum = getChar()
+	if not antiRag then return end
+	local _,_,hum = getChar()
 	hum.PlatformStand = false
-	hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll,false)
-	hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false)
 	hum:ChangeState(Enum.HumanoidStateType.Running)
+end)
 
-	for _,v in pairs(char:GetDescendants()) do
-		if v:IsA("BallSocketConstraint") then
-			v:Destroy()
+ragBtn.MouseButton1Click:Connect(function()
+	antiRag = not antiRag
+	ragBtn.Text = antiRag and "ANTI RAGDOLL: ON" or "ANTI RAGDOLL: OFF"
+end)
+
+--// TOOLS SYSTEM
+local function loadTools(filter)
+	toolsScroll:ClearAllChildren()
+	local y = 0
+
+	for _,obj in pairs(game:GetDescendants()) do
+		if obj:IsA("Tool") and (not filter or obj.Name:lower():find(filter)) then
+			local b = Instance.new("TextButton")
+			b.Size = UDim2.fromOffset(230,30)
+			b.Position = UDim2.fromOffset(15,y)
+			b.Text = obj.Name
+			b.Font = Enum.Font.Gotham
+			b.TextSize = 13
+			b.TextColor3 = Color3.new(1,1,1)
+			b.BackgroundColor3 = Color3.fromRGB(60,60,60)
+			b.Parent = toolsScroll
+			Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+
+			b.MouseButton1Click:Connect(function()
+				obj:Clone().Parent = player.Backpack
+			end)
+
+			y += 35
 		end
 	end
+
+	toolsScroll.CanvasSize = UDim2.new(0,0,0,y)
+end
+
+toolsBtn.MouseButton1Click:Connect(function()
+	toolsFrame.Visible = not toolsFrame.Visible
+	toolsBtn.Text = toolsFrame.Visible and "TOOLS: ON" or "TOOLS: OFF"
+	if toolsFrame.Visible then
+		loadTools()
+		alignToolsFrame()
+	end
 end)
 
-arBtn.MouseButton1Click:Connect(function()
-	antiRagdoll = not antiRagdoll
-	arBtn.Text = antiRagdoll and "ANTI RAGDOLL: ON" or "ANTI RAGDOLL: OFF"
-	arBtn.BackgroundColor3 = antiRagdoll and Color3.fromRGB(80,200,120) or Color3.fromRGB(200,80,80)
+search:GetPropertyChangedSignal("Text"):Connect(function()
+	loadTools(search.Text:lower())
 end)
