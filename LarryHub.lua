@@ -1,6 +1,7 @@
 --// SERVIÇOS
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
@@ -32,9 +33,9 @@ toggle.Draggable = true
 toggle.Parent = gui
 Instance.new("UICorner", toggle).CornerRadius = UDim.new(0,8)
 
---// FRAME PRINCIPAL
+--// FRAME PRINCIPAL (altura reduzida 10%)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(260,330)
+frame.Size = UDim2.fromOffset(260,297) -- altura 330*0.9
 frame.AnchorPoint = Vector2.new(0.5,0.5)
 frame.Position = UDim2.fromScale(0.62,0.5)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
@@ -54,41 +55,122 @@ title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
 title.Parent = frame
 
---// SCROLLING FRAME (INVISÍVEL)
+--// SCROLLING FRAME
 local scroll = Instance.new("ScrollingFrame")
 scroll.Position = UDim2.fromOffset(0,32)
-scroll.Size = UDim2.fromOffset(260,298)
-scroll.CanvasSize = UDim2.new(0,0,0,420)
+scroll.Size = UDim2.fromOffset(260,268)
+scroll.CanvasSize = UDim2.new(0,0,0,0)
 scroll.ScrollBarImageTransparency = 1
 scroll.BackgroundTransparency = 1
 scroll.Parent = frame
 
 --// FUNÇÃO BOTÃO
-local function mkBtn(text,y,color)
+local function mkBtn(text,color)
 	local b = Instance.new("TextButton")
 	b.Size = UDim2.fromOffset(230,34)
-	b.Position = UDim2.fromOffset(15,y)
 	b.Text = text
 	b.Font = Enum.Font.GothamBold
 	b.TextSize = 14
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = color
-	b.Parent = scroll
 	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
 	return b
 end
 
 --// BOTÕES
-local setBtn    = mkBtn("SETAR POSIÇÃO",10,Color3.fromRGB(0,170,255))
-local goBtn     = mkBtn("IR ATÉ POSIÇÃO",55,Color3.fromRGB(0,200,120))
-local noclipBtn = mkBtn("NOCLIP: OFF",100,Color3.fromRGB(200,80,80))
-local ragBtn    = mkBtn("ANTI RAGDOLL: OFF",145,Color3.fromRGB(200,80,80))
-local speedBtn  = mkBtn("",190,Color3.fromRGB(120,120,255))
-local toolsBtn  = mkBtn("TOOLS: OFF",235,Color3.fromRGB(180,120,60))
+local buttons = {}
+buttons[#buttons+1] = mkBtn("SETAR POSIÇÃO", Color3.fromRGB(0,170,255))
+buttons[#buttons+1] = mkBtn("IR ATÉ POSIÇÃO (TP)", Color3.fromRGB(0,200,120))  -- TP
+buttons[#buttons+1] = mkBtn("IR ATÉ POSIÇÃO (TWEEN)", Color3.fromRGB(80,200,120)) -- Tween verde
+buttons[#buttons+1] = mkBtn("NOCLIP: OFF", Color3.fromRGB(200,80,80))
+buttons[#buttons+1] = mkBtn("ANTI RAGDOLL: OFF", Color3.fromRGB(200,80,80))
+buttons[#buttons+1] = mkBtn("SPEED 1x", Color3.fromRGB(120,120,255))
+buttons[#buttons+1] = mkBtn("TOOLS: OFF", Color3.fromRGB(180,120,60))
+buttons[#buttons+1] = mkBtn("Infinite Yield", Color3.fromRGB(128,128,128))
 
---// FRAME TOOLS
+--// POSICIONA BOTÕES DINAMICAMENTE NO SCROLL
+for i,btn in ipairs(buttons) do
+	btn.Position = UDim2.fromOffset(15, 10 + (i-1)*44)
+	btn.Parent = scroll
+end
+scroll.CanvasSize = UDim2.new(0,0,0,10 + #buttons*44)
+
+--// SALVAR POSIÇÃO
+local savedCF
+buttons[1].MouseButton1Click:Connect(function()
+	local _,hrp = getChar()
+	savedCF = hrp.CFrame
+end)
+
+--// IR ATÉ POSIÇÃO (TP) - Teleporte instantâneo
+buttons[2].MouseButton1Click:Connect(function()
+	if not savedCF then return end
+	local _,hrp = getChar()
+	hrp.CFrame = savedCF
+end)
+
+--// IR ATÉ POSIÇÃO (TWEEN) - Tween rápido
+buttons[3].MouseButton1Click:Connect(function()
+	if not savedCF then return end
+	local _, hrp = getChar()
+	local tweenInfo = TweenInfo.new(
+		0.5, -- duração do tween em segundos
+		Enum.EasingStyle.Linear,
+		Enum.EasingDirection.Out
+	)
+	local goal = {CFrame = savedCF}
+	local tween = TweenService:Create(hrp, tweenInfo, goal)
+	tween:Play()
+end)
+
+--// NOCLIP
+local noclip = false
+RunService.Stepped:Connect(function()
+	if not noclip then return end
+	for _,v in pairs(player.Character:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = false
+		end
+	end
+end)
+buttons[4].MouseButton1Click:Connect(function()
+	noclip = not noclip
+	buttons[4].Text = noclip and "NOCLIP: ON" or "NOCLIP: OFF"
+end)
+
+--// ANTI RAGDOLL
+local antiRag = false
+RunService.Heartbeat:Connect(function()
+	if not antiRag then return end
+	local _,_,hum = getChar()
+	hum.PlatformStand = false
+	hum:ChangeState(Enum.HumanoidStateType.Running)
+end)
+buttons[5].MouseButton1Click:Connect(function()
+	antiRag = not antiRag
+	buttons[5].Text = antiRag and "ANTI RAGDOLL: ON" or "ANTI RAGDOLL: OFF"
+end)
+
+--// SPEED
+local speed = 1
+local base = 16
+local function updateSpeed()
+	local next = speed + 1
+	if next > 5 then next = 1 end
+	buttons[6].Text = "SPEED "..speed.."x (PRÓXIMO "..next.."x)"
+	local _,_,hum = getChar()
+	hum.WalkSpeed = base * speed
+end
+updateSpeed()
+buttons[6].MouseButton1Click:Connect(function()
+	speed += 1
+	if speed > 5 then speed = 1 end
+	updateSpeed()
+end)
+
+--// TOOLS FRAME
 local toolsFrame = Instance.new("Frame")
-toolsFrame.Size = UDim2.fromOffset(260,330)
+toolsFrame.Size = UDim2.fromOffset(260,297)
 toolsFrame.AnchorPoint = Vector2.new(0.5,0.5)
 toolsFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 toolsFrame.BorderSizePixel = 0
@@ -111,13 +193,13 @@ Instance.new("UICorner", search).CornerRadius = UDim.new(0,8)
 --// SCROLL TOOLS
 local toolsScroll = Instance.new("ScrollingFrame")
 toolsScroll.Position = UDim2.fromOffset(0,50)
-toolsScroll.Size = UDim2.fromOffset(260,270)
+toolsScroll.Size = UDim2.fromOffset(260,243) -- altura 270*0.9
 toolsScroll.CanvasSize = UDim2.new(0,0,0,0)
 toolsScroll.ScrollBarImageTransparency = 1
 toolsScroll.BackgroundTransparency = 1
 toolsScroll.Parent = toolsFrame
 
---// ALINHAMENTO PERFEITO
+--// ALINHAMENTO FRAME TOOLS
 local function alignToolsFrame()
 	toolsFrame.Position = UDim2.new(
 		frame.Position.X.Scale,
@@ -126,7 +208,6 @@ local function alignToolsFrame()
 		frame.Position.Y.Offset
 	)
 end
-
 frame:GetPropertyChangedSignal("Position"):Connect(alignToolsFrame)
 frame:GetPropertyChangedSignal("Size"):Connect(alignToolsFrame)
 alignToolsFrame()
@@ -136,76 +217,14 @@ toggle.MouseButton1Click:Connect(function()
 	frame.Visible = not frame.Visible
 	if not frame.Visible then
 		toolsFrame.Visible = false
-		toolsBtn.Text = "TOOLS: OFF"
+		buttons[7].Text = "TOOLS: OFF"
 	end
-end)
-
---// SPEED
-local speed = 1
-local base = 16
-local function updateSpeed()
-	local next = speed + 1
-	if next > 5 then next = 1 end
-	speedBtn.Text = "SPEED "..speed.."x (PRÓXIMO "..next.."x)"
-	local _,_,hum = getChar()
-	hum.WalkSpeed = base * speed
-end
-updateSpeed()
-
-speedBtn.MouseButton1Click:Connect(function()
-	speed += 1
-	if speed > 5 then speed = 1 end
-	updateSpeed()
-end)
-
---// SET / GO POS
-local savedCF
-setBtn.MouseButton1Click:Connect(function()
-	local _,hrp = getChar()
-	savedCF = hrp.CFrame
-end)
-
-goBtn.MouseButton1Click:Connect(function()
-	if not savedCF then return end
-	local _,hrp = getChar()
-	hrp.CFrame = savedCF
-end)
-
---// NOCLIP
-local noclip = false
-RunService.Stepped:Connect(function()
-	if not noclip then return end
-	for _,v in pairs(player.Character:GetDescendants()) do
-		if v:IsA("BasePart") then
-			v.CanCollide = false
-		end
-	end
-end)
-
-noclipBtn.MouseButton1Click:Connect(function()
-	noclip = not noclip
-	noclipBtn.Text = noclip and "NOCLIP: ON" or "NOCLIP: OFF"
-end)
-
---// ANTI RAGDOLL
-local antiRag = false
-RunService.Heartbeat:Connect(function()
-	if not antiRag then return end
-	local _,_,hum = getChar()
-	hum.PlatformStand = false
-	hum:ChangeState(Enum.HumanoidStateType.Running)
-end)
-
-ragBtn.MouseButton1Click:Connect(function()
-	antiRag = not antiRag
-	ragBtn.Text = antiRag and "ANTI RAGDOLL: ON" or "ANTI RAGDOLL: OFF"
 end)
 
 --// TOOLS SYSTEM
 local function loadTools(filter)
 	toolsScroll:ClearAllChildren()
 	local y = 0
-
 	for _,obj in pairs(game:GetDescendants()) do
 		if obj:IsA("Tool") and (not filter or obj.Name:lower():find(filter)) then
 			local b = Instance.new("TextButton")
@@ -218,21 +237,18 @@ local function loadTools(filter)
 			b.BackgroundColor3 = Color3.fromRGB(60,60,60)
 			b.Parent = toolsScroll
 			Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-
 			b.MouseButton1Click:Connect(function()
 				obj:Clone().Parent = player.Backpack
 			end)
-
 			y += 35
 		end
 	end
-
 	toolsScroll.CanvasSize = UDim2.new(0,0,0,y)
 end
 
-toolsBtn.MouseButton1Click:Connect(function()
+buttons[7].MouseButton1Click:Connect(function()
 	toolsFrame.Visible = not toolsFrame.Visible
-	toolsBtn.Text = toolsFrame.Visible and "TOOLS: ON" or "TOOLS: OFF"
+	buttons[7].Text = toolsFrame.Visible and "TOOLS: ON" or "TOOLS: OFF"
 	if toolsFrame.Visible then
 		loadTools()
 		alignToolsFrame()
@@ -241,4 +257,9 @@ end)
 
 search:GetPropertyChangedSignal("Text"):Connect(function()
 	loadTools(search.Text:lower())
+end)
+
+--// INFINITE YIELD
+buttons[8].MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
