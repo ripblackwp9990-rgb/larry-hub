@@ -109,15 +109,27 @@ buttons[2].MouseButton1Click:Connect(function()
 	hrp.CFrame = savedCF
 end)
 
---// IR ATÉ POSIÇÃO (TWEEN) - Tween rápido
+--// VARIÁVEL DE VELOCIDADE DO TWEEN (studs por segundo)
+local tweenSpeed = 250 -- você pode alterar esse valor manualmente
+
+--// IR ATÉ POSIÇÃO (TWEEN) - velocidade controlada por você
 buttons[3].MouseButton1Click:Connect(function()
 	if not savedCF then return end
 	local _, hrp = getChar()
+	
+	-- distância entre a posição atual e a posição salva
+	local dist = (hrp.Position - savedCF.Position).Magnitude
+	
+	-- calcula a duração com base na velocidade que você define
+	local duration = dist / tweenSpeed
+	if duration == 0 then return end -- evita tween instantâneo se na mesma posição
+	
 	local tweenInfo = TweenInfo.new(
-		0.1, -- duração do tween em segundos
+		duration,
 		Enum.EasingStyle.Linear,
 		Enum.EasingDirection.Out
 	)
+	
 	local goal = {CFrame = savedCF}
 	local tween = TweenService:Create(hrp, tweenInfo, goal)
 	tween:Play()
