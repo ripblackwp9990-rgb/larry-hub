@@ -19,15 +19,13 @@ gui.Name = "LarryHubDEV"
 gui.ResetOnSpawn = false
 gui.Parent = game.CoreGui
 
---// BOTÃO ☠️
-local toggle = Instance.new("TextButton")
+--// BOTÃO ☠️ (AGORA COM IMAGEM)
+local toggle = Instance.new("ImageButton")
 toggle.Size = UDim2.fromOffset(40,40)
 toggle.Position = UDim2.fromScale(0.92,0.08)
-toggle.Text = "☠️"
-toggle.TextSize = 22
-toggle.Font = Enum.Font.GothamBlack
-toggle.TextColor3 = Color3.new(1,1,1)
+toggle.Image = "rbxthumb://type=Asset&id=97991912407323&w=420&h=420"
 toggle.BackgroundColor3 = Color3.fromRGB(20,20,20)
+toggle.BackgroundTransparency = 0
 toggle.Active = true
 toggle.Draggable = true
 toggle.Parent = gui
